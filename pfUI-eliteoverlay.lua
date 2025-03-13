@@ -5,6 +5,26 @@ pfUI:RegisterModule("EliteOverlay", "vanilla:tbc", function ()
     "off:" .. T["Disabled"]
   }
 
+  pfUI.gui.dropdowns.EliteOverlay_skin = {
+    "classic:" .. T["Classic"],
+    "dragonflight:" .. T["Dragon Flight"]
+  }
+
+  local colors = {
+    classic = {
+      worldboss = { img = "GOLD", vertex = { r = .85, g = .15, b = .15, a = 1 } },
+      rareelite = { img = "GOLD", vertex = { r = 1, g = 1, b = 1, a = 1 } },
+      elite = { img = "GOLD", vertex = { r = .75, g = .6, b = 0, a = 1 } },
+      rare = { img = "GRAY", vertex = { r = .8, g = .8, b = .8, a = 1 } },
+    },
+    dragonflight = {
+      worldboss = { img = "GRAY", vertex = { r = 1, g = .3, b = .3, a = 1 } },
+      rareelite = { img = "GRAY", vertex = { r = .5, g = 1, b = 1, a = 1 } },
+      elite = { img = "GOLD", vertex = { r = 1, g = 1, b = 1, a = 1 } },
+      rare = { img = "GRAY", vertex = { r = 1, g = 1, b = 1, a = 1 } },
+    },
+  }
+
   -- detect current addon path
   local addonpath
   local tocs = { "", "-master", "-tbc", "-wotlk" }
@@ -20,6 +40,7 @@ pfUI:RegisterModule("EliteOverlay", "vanilla:tbc", function ()
   if pfUI.gui.CreateGUIEntry then -- new pfUI
     pfUI.gui.CreateGUIEntry(T["Thirdparty"], T["Elite Overlay"], function()
       pfUI.gui.CreateConfig(pfUI.gui.UpdaterFunctions["target"], T["Select dragon position"], C.EliteOverlay, "position", "dropdown", pfUI.gui.dropdowns.EliteOverlay_positions)
+      pfUI.gui.CreateConfig(pfUI.gui.UpdaterFunctions["skin"], T["Select dragon skin"], C.EliteOverlay, "skin", "dropdown", pfUI.gui.dropdowns.EliteOverlay_skin)
     end)
   else -- old pfUI
     pfUI.gui.tabs.thirdparty.tabs.EliteOverlay = pfUI.gui.tabs.thirdparty.tabs:CreateTabChild("EliteOverlay", true)
@@ -32,11 +53,13 @@ pfUI:RegisterModule("EliteOverlay", "vanilla:tbc", function ()
     end)
   end
 
-  pfUI:UpdateConfig("EliteOverlay",       nil,         "position",   "right")
+  pfUI:UpdateConfig("EliteOverlay",       nil,         "position",   "right"  )
+  pfUI:UpdateConfig("EliteOverlay",       nil,         "skin",       "classic")
 
   local HookRefreshUnit = pfUI.uf.RefreshUnit
   function pfUI.uf:RefreshUnit(unit, component)
     local pos = string.upper(C.EliteOverlay.position)
+    local skin = C.EliteOverlay.skin
     local invert = C.EliteOverlay.position == "right" and 1 or -1
     local unitstr = ( unit.label or "" ) .. ( unit.id or "" )
 
@@ -63,29 +86,12 @@ pfUI:RegisterModule("EliteOverlay", "vanilla:tbc", function ()
       unit.dragonBottom:SetHeight(size)
       unit.dragonBottom:SetPoint("BOTTOM"..pos, unit, "BOTTOM"..pos, invert*size/5.2, -size/2.98)
 
-      if elite == "worldboss" then
-        unit.dragonTop:SetTexture(addonpath.."\\img\\TOP_GOLD_"..pos)
-        unit.dragonTop:SetVertexColor(.85,.15,.15,1)
-        unit.dragonBottom:SetTexture(addonpath.."\\img\\BOTTOM_GOLD_"..pos)
-        unit.dragonBottom:SetVertexColor(.85,.15,.15,1)
-        unit.dragon:Show()
-      elseif elite == "rareelite" then
-        unit.dragonTop:SetTexture(addonpath.."\\img\\TOP_GOLD_"..pos)
-        unit.dragonTop:SetVertexColor(1,1,1,1)
-        unit.dragonBottom:SetTexture(addonpath.."\\img\\BOTTOM_GOLD_"..pos)
-        unit.dragonBottom:SetVertexColor(1,1,1,1)
-        unit.dragon:Show()
-      elseif elite == "elite" then
-        unit.dragonTop:SetTexture(addonpath.."\\img\\TOP_GOLD_"..pos)
-        unit.dragonTop:SetVertexColor(.75,.6,0,1)
-        unit.dragonBottom:SetTexture(addonpath.."\\img\\BOTTOM_GOLD_"..pos)
-        unit.dragonBottom:SetVertexColor(.75,.6,0,1)
-        unit.dragon:Show()
-      elseif elite == "rare" then
-        unit.dragonTop:SetTexture(addonpath.."\\img\\TOP_GRAY_"..pos)
-        unit.dragonTop:SetVertexColor(.8,.8,.8,1)
-        unit.dragonBottom:SetTexture(addonpath.."\\img\\BOTTOM_GRAY_"..pos)
-        unit.dragonBottom:SetVertexColor(.8,.8,.8,1)
+      local color = colors[skin][elite]
+      if color ~= nil then
+        unit.dragonTop:SetTexture(addonpath.."\\img\\"..skin.."\\TOP_"..color.img.."_"..pos)
+        unit.dragonTop:SetVertexColor(color.vertex.r, color.vertex.g, color.vertex.b, color.vertex.a)
+        unit.dragonBottom:SetTexture(addonpath.."\\img\\"..skin.."\\BOTTOM_"..color.img.."_"..pos)
+        unit.dragonBottom:SetVertexColor(color.vertex.r, color.vertex.g, color.vertex.b, color.vertex.a)
         unit.dragon:Show()
       else
         unit.dragon:Hide()
